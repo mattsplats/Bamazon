@@ -47,32 +47,12 @@ function mainPrompt () {
 const ops = {
 	'View Products for Sale': function () {
 		const query = 'SELECT * FROM products;'
-		conn.query(query, (err, res) => {
-	  	if (err) throw err;
-
-			console.log(`
- ID    Desc                               Price   Stock
-=======================================================`);
-			for (const row of res) console.log(_.padStart(row.ItemID, 6), _.padEnd(row.ProductName, 30), _.padStart('$'+row.Price, 9), _.padStart(row.StockQuantity, 7));
-			console.log();
-
-	  	mainPrompt();
-	  });
+		conn.query(query, displayRows);
 	},
 
 	'View Low Inventory': function () {
 		const query = 'SELECT * FROM products WHERE StockQuantity < 6;'
-		conn.query(query, (err, res) => {
-	  	if (err) throw err;
-
-			console.log(`
- ID    Desc                               Price   Stock
-=======================================================`);
-			for (const row of res) console.log(_.padStart(row.ItemID, 6), _.padEnd(row.ProductName, 30), _.padStart('$'+row.Price, 9), _.padStart(row.StockQuantity, 7));
-			console.log();
-
-	  	mainPrompt();
-	  });
+		conn.query(query, displayRows);
 	},
 
 	'Add to Inventory': function () {
@@ -95,8 +75,8 @@ const ops = {
 				{
 					name: "quantity",
 					type: "input",
-					message: "Enter the quantity (not to exceed 10,000):",
-					validate: input => +input > 0 && +input < 10000
+					message: "Enter the quantity (max 10,000):",
+					validate: input => +input > 0 && +input < 10001
 				}
 			]).then(input => {
 				// Get the database row for the selected product
@@ -109,7 +89,7 @@ const ops = {
 
 					const newQuantity = (+rowToUpdate.StockQuantity) + (+input.quantity);
 					console.log(`
-Reorder successful!
+Reorder successful.
 
 [${inventory[indexOfChosenItem]}] will have a new stock quantity of: ${newQuantity}.
 A debit of $${(rowToUpdate.Price * input.quantity).toFixed(2)} will be added to accounts payable.`);
@@ -121,30 +101,99 @@ A debit of $${(rowToUpdate.Price * input.quantity).toFixed(2)} will be added to 
 	},
 
 	'Add New Product': function () {
-		// Get desired song title
+		console.log(`
+Please enter the following new product details:`);
+
 		inquirer.prompt([
 			{
-					name: "song",
+					name: "ItemID",
 					type: "input",
-					message: "Which song?",
-					validate: input => !!input  // Requires a value for song, will reprompt if empty
+					message: "ID#?",
+					validate: input => +input > 0 && +input < 999999,
+					filter: input => +input
+			},
+			{
+					name: "ProductName",
+					type: "input",
+					message: "Name?",
+					validate: input => !!input
+			},
+			{
+					name: "DepartmentName",
+					type: "input",
+					message: "Department?",
+					validate: input => !!input
+			},
+			{
+					name: "Price",
+					type: "input",
+					message: "Price?",
+					validate: input => +input > 0,
+					filter: input => (+input).toFixed(2)
+			},
+			{
+					name: "StockQuantity",
+					type: "input",
+					message: "Intitial stock quantity (max 10,000)?",
+					validate: input => +input > 0 && +input < 10001,
+					filter: input => +input
 			}
 		]).then(input => {
-			const query = `SELECT position, song, year FROM top5000 WHERE song LIKE ?;`
+			const query = `INSERT IGNORE INTO products SET ?;`
+			conn.query(query, input, (err, res) => {
+				if (err) throw err;
 
-			conn.query(query, `%${input.song}%`, outputInfo);
+				if (res.warningCount === 0) success(input);
+				else reprompt(input);
+
+				function reprompt (prevInput) {
+					console.log();
+					inquirer.prompt([
+					{
+						name: "ItemID",
+						type: "input",
+						message: "Sorry, there is already a product with that ID#. Please enter a new ID#:",
+						validate: input => +input > 0 && +input < 999999
+					}
+					]).then(input => {
+						prevInput.ItemID = input.ItemID;
+						// console.log(prevInput);
+
+						const query = `INSERT IGNORE INTO products SET ?;`
+						conn.query(query, prevInput, (err, res) => {
+							if (err) throw err;
+
+							if (res.warningCount === 0) success(prevInput);
+							else reprompt(prevInput);							
+						});
+					});
+				}
+
+				function success (input) {
+					console.log();
+					for (const prop in input) console.log(`${_.padEnd(prop + ':', 17)} ${prop === 'Price' ? '$' : ''}${input[prop]}`);
+					console.log();
+					console.log('New product successfully added.');
+
+					mainPrompt();
+				}
+			});
 		});		
-	},
-
-	'Find artists with a top song and top album in the same year': function () {
-		const query = `SELECT songs.artist FROM top5000 AS songs
-			JOIN top3000 AS albums ON (songs.artist = albums.artist AND songs.year = albums.year)
-    	GROUP BY songs.artist ORDER BY songs.artist;`
-
-		conn.query(query, outputArtists);
 	},
 
 	'Quit': function () {
 		conn.end();
 	}
+}
+
+function displayRows (err, res) {
+	if (err) throw err;
+
+	console.log(`
+ ID    Desc                               Price   Stock
+=======================================================`);
+	for (const row of res) console.log(_.padStart(row.ItemID, 6), _.padEnd(row.ProductName, 30), _.padStart('$'+row.Price, 9), _.padStart(row.StockQuantity, 7));
+	console.log();
+
+	mainPrompt();
 }
