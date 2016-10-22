@@ -16,30 +16,29 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `products`
+-- Table structure for table `departments`
 --
 
-DROP TABLE IF EXISTS `products`;
+DROP TABLE IF EXISTS `departments`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `products` (
-  `ItemID` int(10) NOT NULL,
-  `ProductName` varchar(100) DEFAULT NULL,
-  `DepartmentName` varchar(50) DEFAULT NULL,
-  `Price` decimal(7,2) DEFAULT NULL,
-  `StockQuantity` int(7) DEFAULT NULL,
-  PRIMARY KEY (`ItemID`)
+CREATE TABLE `departments` (
+  `DepartmentID` int(10) NOT NULL,
+  `DepartmentName` varchar(30) DEFAULT NULL,
+  `OverheadCosts` decimal(10,2) DEFAULT NULL,
+  `TotalSales` decimal(10,2) DEFAULT NULL,
+  PRIMARY KEY (`DepartmentID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `products`
+-- Dumping data for table `departments`
 --
 
-LOCK TABLES `products` WRITE;
-/*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (74,'Super Plus Laptop','electronics',1899.99,18),(1058,'Extra Special Tablet','electronics',599.99,155),(4005,'Big Screen TV','electronics',1499.99,14),(20034,'American History','books',48.67,593),(20100,'Mathematics','books',58.11,374),(20101,'Bigger Screen TV','electronics',2999.99,200),(21583,'Science Fiction Stories','books',14.53,1840),(24934,'Murder Mysteries','books',19.99,304),(30192,'Die Hard','movies',5.99,2041),(37236,'Die Hard 2','movies',5.99,1304),(38236,'Die Hard 3','movies',5.99,993),(58273,'Set of 4 Glasses','household',16.49,710),(59278,'Ginsu Knife Set','household',49.99,3);
-/*!40000 ALTER TABLE `products` ENABLE KEYS */;
+LOCK TABLES `departments` WRITE;
+/*!40000 ALTER TABLE `departments` DISABLE KEYS */;
+INSERT INTO `departments` VALUES (1,'electronics',100000.00,397499.25),(2,'clothing',80000.00,170000.00),(3,'books',50000.00,160000.00),(4,'movies',30000.00,70011.98),(5,'household',60000.00,140000.00),(6,'clothing',50000.00,100000.00);
+/*!40000 ALTER TABLE `departments` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

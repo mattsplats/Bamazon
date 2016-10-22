@@ -1,6 +1,7 @@
 'use strict';
 
-// Method for finding the index (or, the element at index) of an item with the given property === value
+// Method for finding the index (or, the element at index) of an item with the given property.value === value
+// Allows use of cached table data, instead of requerying the database
 Array.prototype.indexOfProp = function indexOfProp (propName, value, returnElement=false) {
 	for (let i = 0; i < this.length; i++) {
 		if (propName in this[i] && this[i][propName] === value) return returnElement ? this[i] : i;
@@ -36,12 +37,12 @@ conn.connect(err => {
 		for (const row of res) console.log(_.padStart(row.ItemID, 6), _.padEnd(row.ProductName, 30), _.padStart('$'+row.Price, 9));
 		console.log();
 
-  	prompt(res);
+  	mainPrompt(res);
   });
 });
 
 // Command choice prompt
-function prompt(resultArr) {
+function mainPrompt(resultArr) {
 	inquirer.prompt([
 		{
 				name: 'item',
@@ -60,7 +61,7 @@ function prompt(resultArr) {
 
 		// If the quantity in stock is insufficient
 		if (input.quantity > rowToUpdate.StockQuantity) {
-			console.log('Insufficient quantity in stock');
+			console.log('\nInsufficient quantity in stock');
 			conn.end();
 
 		} else {
@@ -72,7 +73,12 @@ function prompt(resultArr) {
 Order successful!
 Your card on file was charged $${(rowToUpdate.Price * input.quantity * SALES_TAX).toFixed(2)}.`);
 
-				conn.end();
+				const query = 'UPDATE departments SET TotalSales = TotalSales + ? WHERE DepartmentName = ?;'
+				conn.query(query, [rowToUpdate.Price * input.quantity, rowToUpdate.DepartmentName], (err, res) => {
+					if (err) throw err;
+
+					conn.end();
+				});
 			});
 		}
 	});

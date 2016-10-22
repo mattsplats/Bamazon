@@ -10,3 +10,11 @@ CREATE TABLE Products (
     StockQuantity INT(7),
     PRIMARY KEY (ItemID)
 );
+
+CREATE TABLE Departments (
+	DepartmentID INT(3),
+    DepartmentName VARCHAR(30),
+    OverheadCosts DECIMAL(10,2),
+    TotalSales DECIMAL(10,2),
+    PRIMARY KEY (DepartmentID)
+);

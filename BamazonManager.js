@@ -1,13 +1,5 @@
 'use strict';
 
-// Method for finding the index (or, the element at index) of an item with the given property === value
-Array.prototype.indexOfProp = function indexOfProp (propName, value, returnElement=false) {
-	for (let i = 0; i < this.length; i++) {
-		if (propName in this[i] && this[i][propName] === value) return returnElement ? this[i] : i;
-	}
-	return -1;
-};
-
 const mysql     = require('mysql'),
       inquirer  = require('inquirer'),
       _         = require('lodash'),
@@ -67,15 +59,15 @@ const ops = {
 	  	console.log();
 	  	inquirer.prompt([
 				{
-					name: "item",
-					type: "list",
+					name: 'item',
+					type: 'list',
 					choices: inventory,
-					message: "Reorder which product?"
+					message: 'Reorder which product?'
 				},
 				{
-					name: "quantity",
-					type: "input",
-					message: "Enter the quantity (max 10,000):",
+					name: 'quantity',
+					type: 'input',
+					message: 'Enter the quantity (max 10000):',
 					validate: input => +input > 0 && +input < 10001
 				}
 			]).then(input => {
@@ -83,7 +75,7 @@ const ops = {
 				const indexOfChosenItem = inventory.indexOf(input.item);
 				const rowToUpdate = resultArr[indexOfChosenItem];
 
-				const query = `UPDATE products SET StockQuantity = StockQuantity + ? WHERE ItemID = ?;`
+				const query = 'UPDATE products SET StockQuantity = StockQuantity + ? WHERE ItemID = ?;'
 				conn.query(query, [input.quantity, rowToUpdate.ItemID], (err, res) => {
 					if (err) throw err;
 
@@ -106,58 +98,62 @@ Please enter the following new product details:`);
 
 		inquirer.prompt([
 			{
-					name: "ItemID",
-					type: "input",
-					message: "ID#?",
+					name: 'ItemID',
+					type: 'input',
+					message: 'ID#?',
 					validate: input => +input > 0 && +input < 999999,
 					filter: input => +input
 			},
 			{
-					name: "ProductName",
-					type: "input",
-					message: "Name?",
+					name: 'ProductName',
+					type: 'input',
+					message: 'Name?',
 					validate: input => !!input
 			},
 			{
-					name: "DepartmentName",
-					type: "input",
-					message: "Department?",
+					name: 'DepartmentName',
+					type: 'input',
+					message: 'Department?',
 					validate: input => !!input
 			},
 			{
-					name: "Price",
-					type: "input",
-					message: "Price?",
+					name: 'Price',
+					type: 'input',
+					message: 'Price?',
 					validate: input => +input > 0,
 					filter: input => (+input).toFixed(2)
 			},
 			{
-					name: "StockQuantity",
-					type: "input",
-					message: "Intitial stock quantity (max 10,000)?",
+					name: 'StockQuantity',
+					type: 'input',
+					message: 'Intitial stock quantity (max 10000)?',
 					validate: input => +input > 0 && +input < 10001,
 					filter: input => +input
 			}
 		]).then(input => {
-			const query = `INSERT IGNORE INTO products SET ?;`
+			const query = 'INSERT IGNORE INTO products SET ?;'
 			conn.query(query, input, (err, res) => {
 				if (err) throw err;
 
+				// Using INSERT IGNORE triggers a warning on duplicate primary key insertions (ItemID)
+				// If MySQL gives a warning, assume this is an attemtp to update a duplicate ID, and reprompt for ItemId 
 				if (res.warningCount === 0) success(input);
 				else reprompt(input);
 
+				// Triggered on duplicate ItemID entry
+				// prevInput is kept so only the ID has to be re-entered
 				function reprompt (prevInput) {
 					console.log();
 					inquirer.prompt([
 					{
-						name: "ItemID",
-						type: "input",
-						message: "Sorry, there is already a product with that ID#. Please enter a new ID#:",
-						validate: input => +input > 0 && +input < 999999
+						name: 'ItemID',
+						type: 'input',
+						message: 'Sorry, there is already a product with that ID#. Please enter a new ID#:',
+						validate: input => +input > 0 && +input < 999999,
+						filter: input => +input
 					}
 					]).then(input => {
 						prevInput.ItemID = input.ItemID;
-						// console.log(prevInput);
 
 						const query = `INSERT IGNORE INTO products SET ?;`
 						conn.query(query, prevInput, (err, res) => {
@@ -169,6 +165,7 @@ Please enter the following new product details:`);
 					});
 				}
 
+				// Insertion completed with no warnings
 				function success (input) {
 					console.log();
 					for (const prop in input) console.log(`${_.padEnd(prop + ':', 17)} ${prop === 'Price' ? '$' : ''}${input[prop]}`);
@@ -186,6 +183,7 @@ Please enter the following new product details:`);
 	}
 }
 
+// Generic table output function
 function displayRows (err, res) {
 	if (err) throw err;
 
